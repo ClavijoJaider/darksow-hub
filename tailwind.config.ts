@@ -57,6 +57,23 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        gaming: {
+          glow: "hsl(var(--gaming-glow))",
+        },
+        gold: {
+          DEFAULT: "hsl(var(--gold))",
+          glow: "hsl(var(--gold-glow))",
+        },
+      },
+      backgroundImage: {
+        'gradient-primary': 'var(--gradient-primary)',
+        'gradient-gold': 'var(--gradient-gold)',
+        'gradient-dark': 'var(--gradient-dark)',
+      },
+      boxShadow: {
+        'glow': 'var(--shadow-glow)',
+        'gold-glow': 'var(--shadow-gold-glow)',
+        'elevated': 'var(--shadow-elevated)',
       },
       borderRadius: {
         lg: "var(--radius)",
