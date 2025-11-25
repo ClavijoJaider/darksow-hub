@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthService, User } from "@/lib/auth";
 import { toast } from "sonner";
-import { User as UserIcon, Star, Coins, Heart, Save } from "lucide-react";
+import { User as UserIcon, Star, Coins, Heart, Save, Upload } from "lucide-react";
 
 const Perfil = () => {
   const navigate = useNavigate();
@@ -29,6 +29,23 @@ const Perfil = () => {
       minecraft_username: currentUser.minecraft_username || "",
     });
   }, [navigate]);
+
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const updatedUser = {
+        ...user,
+        avatar: reader.result as string,
+      };
+      AuthService.updateUser(updatedUser);
+      setUser(updatedUser);
+      toast.success("Imagen de perfil actualizada");
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleSave = () => {
     if (!user) return;
@@ -67,8 +84,27 @@ const Perfil = () => {
           {/* Profile Header */}
           <Card className="p-8 border-border bg-gradient-to-br from-card to-muted">
             <div className="flex flex-col md:flex-row items-center gap-6">
-              <div className="w-24 h-24 bg-gradient-primary rounded-full flex items-center justify-center shadow-glow">
-                <UserIcon className="w-12 h-12 text-foreground" />
+              <div className="relative group">
+                <div className="w-24 h-24 bg-gradient-primary rounded-full flex items-center justify-center shadow-glow overflow-hidden">
+                  {user.avatar ? (
+                    <img src={user.avatar} alt={user.username} className="w-full h-full object-cover" />
+                  ) : (
+                    <UserIcon className="w-12 h-12 text-foreground" />
+                  )}
+                </div>
+                <Input
+                  id="avatar-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => document.getElementById('avatar-upload')?.click()}
+                  className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                >
+                  <Upload className="w-6 h-6 text-white" />
+                </button>
               </div>
               <div className="flex-1 text-center md:text-left space-y-2">
                 <h1 className="text-3xl font-bold text-foreground">

@@ -7,6 +7,8 @@ import { AuthService } from "@/lib/auth";
 import { ForumService, ForumPost, ForumComment } from "@/lib/forum";
 import { ArrowLeft, Pin, Lock, Trash2, Edit, ThumbsUp, Heart, Flame, MessageSquare, Eye } from "lucide-react";
 import { toast } from "sonner";
+import { UserAvatar } from "@/components/UserAvatar";
+import { UserBadge } from "@/components/UserBadge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -160,7 +162,8 @@ const ForoPost = () => {
         </Button>
 
         <Card className="p-6 border-border mb-6">
-          <div className="flex items-start justify-between mb-4">
+          <div className="flex items-start gap-4 mb-4">
+            <UserAvatar avatar={post.author_avatar} username={post.author_username} size="lg" />
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
                 {post.pinned && <Pin className="w-4 h-4 text-primary" />}
@@ -170,12 +173,13 @@ const ForoPost = () => {
                 </span>
               </div>
               <h1 className="text-3xl font-bold text-foreground mb-2">{post.title}</h1>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <span>Por {post.author_username}</span>
-                <span>•</span>
-                <span>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: es })}</span>
-                <span>•</span>
-                <span className="flex items-center gap-1">
+              <div className="flex items-center gap-3 text-sm">
+                <span className="font-semibold text-foreground">{post.author_username}</span>
+                <UserBadge role={post.author_role as any} />
+                <span className="text-muted-foreground">•</span>
+                <span className="text-muted-foreground">{formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: es })}</span>
+                <span className="text-muted-foreground">•</span>
+                <span className="flex items-center gap-1 text-muted-foreground">
                   <Eye className="w-3 h-3" />
                   {post.views} vistas
                 </span>
@@ -231,6 +235,18 @@ const ForoPost = () => {
 
           <div className="prose prose-invert max-w-none mb-6">
             <p className="text-foreground whitespace-pre-wrap">{post.content}</p>
+            {post.images && post.images.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                {post.images.map((img, idx) => (
+                  <img
+                    key={idx}
+                    src={img}
+                    alt={`${post.title} - Imagen ${idx + 1}`}
+                    className="w-full rounded-lg border border-border"
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex gap-2 border-t border-border pt-4">
@@ -315,12 +331,17 @@ const ForoPost = () => {
                 </div>
               ) : (
                 <>
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <p className="font-semibold text-foreground">{comment.author_username}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true, locale: es })}
-                      </p>
+                  <div className="flex items-start gap-3 mb-3">
+                    <UserAvatar avatar={comment.author_avatar} username={comment.author_username} size="sm" />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="font-semibold text-foreground">{comment.author_username}</p>
+                        <UserBadge role={comment.author_role as any} />
+                        <p className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true, locale: es })}
+                        </p>
+                      </div>
+                      <p className="text-foreground whitespace-pre-wrap">{comment.content}</p>
                     </div>
                     {(canModerate || (user && user.id === comment.author_id)) && (
                       <div className="flex gap-2">
@@ -358,8 +379,7 @@ const ForoPost = () => {
                       </div>
                     )}
                   </div>
-                  <p className="text-foreground mb-3 whitespace-pre-wrap">{comment.content}</p>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 ml-11">
                     <Button
                       variant={comment.reactions.like.includes(user?.id || '') ? "default" : "outline"}
                       size="sm"
