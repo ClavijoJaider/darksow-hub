@@ -1,89 +1,49 @@
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { MessageSquare, Pin, Lock, User } from "lucide-react";
+import { MessageSquare, Pin, Lock, Eye, ThumbsUp, Heart, Flame } from "lucide-react";
 import { AuthService } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { ForumService, ForumCategory, ForumPost } from "@/lib/forum";
+import { CreatePostDialog } from "@/components/CreatePostDialog";
+import { formatDistanceToNow } from "date-fns";
+import { es } from "date-fns/locale";
 
 const Foro = () => {
   const user = AuthService.getCurrentUser();
   const navigate = useNavigate();
+  const [categories, setCategories] = useState<ForumCategory[]>([]);
+  const [posts, setPosts] = useState<ForumPost[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const categories = [
-    {
-      name: "Anuncios",
-      description: "Noticias oficiales del servidor",
-      topics: 24,
-      posts: 156,
-      icon: Pin,
-      color: "primary",
-    },
-    {
-      name: "General",
-      description: "Discusión general sobre Darksow",
-      topics: 342,
-      posts: 2847,
-      icon: MessageSquare,
-      color: "muted",
-    },
-    {
-      name: "Skyblock",
-      description: "Todo sobre el modo Skyblock",
-      topics: 158,
-      posts: 1243,
-      icon: MessageSquare,
-      color: "muted",
-    },
-    {
-      name: "Majestic Mods",
-      description: "Discusión sobre Majestic Mods",
-      topics: 89,
-      posts: 567,
-      icon: MessageSquare,
-      color: "muted",
-    },
-    {
-      name: "Reportes",
-      description: "Reporta jugadores o bugs",
-      topics: 45,
-      posts: 123,
-      icon: Lock,
-      color: "destructive",
-    },
-  ];
+  useEffect(() => {
+    loadData();
+  }, []);
 
-  const recentTopics = [
-    {
-      title: "¿Cómo conseguir más coins en Skyblock?",
-      author: "Player123",
-      replies: 15,
-      views: 234,
-      category: "Skyblock",
-    },
-    {
-      title: "Ideas para la próxima actualización",
-      author: "BuilderPro",
-      replies: 28,
-      views: 451,
-      category: "General",
-    },
-    {
-      title: "Guía de mods en Majestic Mods",
-      author: "ModExpert",
-      replies: 42,
-      views: 876,
-      category: "Majestic Mods",
-      pinned: true,
-    },
-  ];
+  const loadData = () => {
+    setCategories(ForumService.getCategories());
+    setPosts(ForumService.getPosts());
+  };
 
-  const handleNewTopic = () => {
-    if (!user) {
-      toast.error("Debes iniciar sesión para crear un tema");
-      navigate("/auth");
-      return;
-    }
-    toast.success("Función de crear tema próximamente");
+  const filteredPosts = selectedCategory
+    ? posts.filter((p) => p.category_id === selectedCategory)
+    : posts;
+
+  const sortedPosts = [...filteredPosts].sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+
+  const getCategoryStats = (categoryId: string) => {
+    const categoryPosts = posts.filter((p) => p.category_id === categoryId);
+    return {
+      topics: categoryPosts.length,
+      posts: categoryPosts.reduce((sum, p) => sum + ForumService.getPostComments(p.id).length, 0),
+    };
+  };
+
+  const getTotalReactions = (post: ForumPost) => {
+    return post.reactions.like.length + post.reactions.love.length + post.reactions.fire.length;
   };
 
   return (
@@ -96,30 +56,36 @@ const Foro = () => {
           <p className="text-lg text-muted-foreground">
             Comunidad y discusiones
           </p>
-          <Button
-            className="bg-gradient-primary shadow-glow hover:shadow-gold-glow transition-all"
-            onClick={handleNewTopic}
-          >
-            <MessageSquare className="w-4 h-4 mr-2" />
-            Nuevo Tema
-          </Button>
+          {user ? (
+            <CreatePostDialog user={user} categories={categories} />
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Inicia sesión para crear temas
+            </p>
+          )}
         </div>
 
         <div className="max-w-5xl mx-auto space-y-8">
           {/* Categories */}
           <div className="space-y-4">
             <h2 className="text-2xl font-bold text-foreground">Categorías</h2>
-            <div className="space-y-2">
+            <div className="grid gap-2">
               {categories.map((category) => {
-                const Icon = category.icon;
+                const stats = getCategoryStats(category.id);
+                const Icon = category.icon === 'Pin' ? Pin : category.icon === 'Lock' ? Lock : MessageSquare;
+                const isSelected = selectedCategory === category.id;
+                
                 return (
                   <Card
-                    key={category.name}
-                    className="p-4 border-border hover:border-primary transition-all duration-300 hover:shadow-glow cursor-pointer"
+                    key={category.id}
+                    className={`p-4 border-border hover:border-primary transition-all duration-300 hover:shadow-glow cursor-pointer ${
+                      isSelected ? 'border-primary shadow-glow' : ''
+                    }`}
+                    onClick={() => setSelectedCategory(isSelected ? null : category.id)}
                   >
                     <div className="flex items-center gap-4">
                       <div className="flex-shrink-0">
-                        <div className={`w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center shadow-glow`}>
+                        <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center shadow-glow">
                           <Icon className="w-6 h-6 text-foreground" />
                         </div>
                       </div>
@@ -133,10 +99,10 @@ const Foro = () => {
                       </div>
                       <div className="flex-shrink-0 text-right hidden sm:block">
                         <p className="text-sm font-semibold text-foreground">
-                          {category.topics} temas
+                          {stats.topics} temas
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {category.posts} mensajes
+                          {stats.posts} mensajes
                         </p>
                       </div>
                     </div>
@@ -146,43 +112,82 @@ const Foro = () => {
             </div>
           </div>
 
-          {/* Recent Topics */}
+          {/* Posts */}
           <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-foreground">
-              Temas Recientes
-            </h2>
-            <div className="space-y-2">
-              {recentTopics.map((topic, index) => (
-                <Card
-                  key={index}
-                  className="p-4 border-border hover:border-primary transition-all duration-300 hover:shadow-glow cursor-pointer"
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-foreground">
+                {selectedCategory ? `Temas en ${categories.find(c => c.id === selectedCategory)?.name}` : 'Todos los Temas'}
+              </h2>
+              {selectedCategory && (
+                <button
+                  onClick={() => setSelectedCategory(null)}
+                  className="text-sm text-primary hover:underline"
                 >
-                  <div className="space-y-2">
-                    <div className="flex items-start gap-2">
-                      {topic.pinned && (
-                        <Pin className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-foreground hover:text-primary transition-colors">
-                          {topic.title}
-                        </h3>
-                        <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground mt-1">
-                          <span className="flex items-center gap-1">
-                            <User className="w-3 h-3" />
-                            {topic.author}
-                          </span>
-                          <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs">
-                            {topic.category}
-                          </span>
-                          <span>{topic.replies} respuestas</span>
-                          <span>{topic.views} vistas</span>
+                  Ver todos
+                </button>
+              )}
+            </div>
+            
+            {sortedPosts.length === 0 ? (
+              <Card className="p-8 border-border text-center">
+                <MessageSquare className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground">
+                  No hay temas en esta categoría. ¡Sé el primero en crear uno!
+                </p>
+              </Card>
+            ) : (
+              <div className="space-y-2">
+                {sortedPosts.map((post) => {
+                  const commentCount = ForumService.getPostComments(post.id).length;
+                  const totalReactions = getTotalReactions(post);
+                  
+                  return (
+                    <Card
+                      key={post.id}
+                      className="p-4 border-border hover:border-primary transition-all duration-300 hover:shadow-glow cursor-pointer"
+                      onClick={() => navigate(`/foro/post/${post.id}`)}
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-start gap-2">
+                          {post.pinned && (
+                            <Pin className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
+                          )}
+                          {post.locked && (
+                            <Lock className="w-4 h-4 text-destructive flex-shrink-0 mt-1" />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-foreground hover:text-primary transition-colors">
+                              {post.title}
+                            </h3>
+                            <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground mt-1">
+                              <span>Por {post.author_username}</span>
+                              <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs">
+                                {post.category_name}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <MessageSquare className="w-3 h-3" />
+                                {commentCount}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Eye className="w-3 h-3" />
+                                {post.views}
+                              </span>
+                              {totalReactions > 0 && (
+                                <span className="flex items-center gap-1">
+                                  <Heart className="w-3 h-3" />
+                                  {totalReactions}
+                                </span>
+                              )}
+                              <span>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: es })}</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>
