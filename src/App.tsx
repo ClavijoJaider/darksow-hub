@@ -12,6 +12,7 @@ import Rankings from "./pages/Rankings";
 import Tienda from "./pages/Tienda";
 import Noticias from "./pages/Noticias";
 import Foro from "./pages/Foro";
+import ForoPost from "./pages/ForoPost";
 import Perfil from "./pages/Perfil";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
@@ -42,7 +43,8 @@ const App = () => {
             <Route path="/rankings" element={<Rankings />} />
             <Route path="/tienda" element={<Tienda />} />
             <Route path="/noticias" element={<Noticias />} />
-            <Route path="/foro" element={<Foro />} />
+          <Route path="/foro" element={<Foro />} />
+          <Route path="/foro/post/:postId" element={<ForoPost />} />
             <Route path="/perfil" element={<Perfil />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="*" element={<NotFound />} />
