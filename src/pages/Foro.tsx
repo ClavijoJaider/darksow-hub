@@ -1,12 +1,20 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { MessageSquare, Pin, Lock, Eye, ThumbsUp, Heart, Flame } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { MessageSquare, Pin, Lock, Eye, ThumbsUp, Heart, Flame, Search } from "lucide-react";
 import { AuthService } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
 import { ForumService, ForumCategory, ForumPost } from "@/lib/forum";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const Foro = () => {
   const user = AuthService.getCurrentUser();
@@ -14,6 +22,8 @@ const Foro = () => {
   const [categories, setCategories] = useState<ForumCategory[]>([]);
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"recent" | "popular" | "views">("recent");
 
   useEffect(() => {
     loadData();
@@ -24,13 +34,28 @@ const Foro = () => {
     setPosts(ForumService.getPosts());
   };
 
-  const filteredPosts = selectedCategory
-    ? posts.filter((p) => p.category_id === selectedCategory)
-    : posts;
+  const filteredPosts = posts.filter((p) => {
+    const matchesCategory = selectedCategory ? p.category_id === selectedCategory : true;
+    const matchesSearch = searchQuery
+      ? p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.author_username.toLowerCase().includes(searchQuery.toLowerCase())
+      : true;
+    return matchesCategory && matchesSearch;
+  });
 
   const sortedPosts = [...filteredPosts].sort((a, b) => {
     if (a.pinned && !b.pinned) return -1;
     if (!a.pinned && b.pinned) return 1;
+    
+    if (sortBy === "popular") {
+      const aReactions = a.reactions.like.length + a.reactions.love.length + a.reactions.fire.length;
+      const bReactions = b.reactions.like.length + b.reactions.love.length + b.reactions.fire.length;
+      return bReactions - aReactions;
+    } else if (sortBy === "views") {
+      return b.views - a.views;
+    }
+    
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
@@ -114,18 +139,39 @@ const Foro = () => {
 
           {/* Posts */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <h2 className="text-2xl font-bold text-foreground">
                 {selectedCategory ? `Temas en ${categories.find(c => c.id === selectedCategory)?.name}` : 'Todos los Temas'}
               </h2>
-              {selectedCategory && (
-                <button
-                  onClick={() => setSelectedCategory(null)}
-                  className="text-sm text-primary hover:underline"
-                >
-                  Ver todos
-                </button>
-              )}
+              <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                <div className="relative flex-1 md:w-64">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar temas..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
+                  <SelectTrigger className="w-full sm:w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="recent">Recientes</SelectItem>
+                    <SelectItem value="popular">Populares</SelectItem>
+                    <SelectItem value="views">Más vistos</SelectItem>
+                  </SelectContent>
+                </Select>
+                {selectedCategory && (
+                  <button
+                    onClick={() => setSelectedCategory(null)}
+                    className="text-sm text-primary hover:underline whitespace-nowrap"
+                  >
+                    Ver todos
+                  </button>
+                )}
+              </div>
             </div>
             
             {sortedPosts.length === 0 ? (

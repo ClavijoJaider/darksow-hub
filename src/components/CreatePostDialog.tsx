@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Image as ImageIcon, X } from "lucide-react";
 import { ForumService, ForumCategory } from "@/lib/forum";
 import { User } from "@/lib/auth";
 import { toast } from "sonner";
@@ -35,7 +35,25 @@ export const CreatePostDialog = ({ user, categories }: CreatePostDialogProps) =>
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [images, setImages] = useState<string[]>([]);
   const navigate = useNavigate();
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach((file) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImages((prev) => [...prev, reader.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeImage = (index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,12 +63,13 @@ export const CreatePostDialog = ({ user, categories }: CreatePostDialogProps) =>
       return;
     }
 
-    const post = ForumService.createPost(title, content, categoryId, user);
+    const post = ForumService.createPost(title, content, categoryId, user, images.length > 0 ? images : undefined);
     toast.success("Post creado exitosamente");
     
     setTitle("");
     setContent("");
     setCategoryId("");
+    setImages([]);
     setOpen(false);
     
     navigate(`/foro/post/${post.id}`);
@@ -106,11 +125,48 @@ export const CreatePostDialog = ({ user, categories }: CreatePostDialogProps) =>
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 className="min-h-[200px]"
-                maxLength={5000}
               />
-              <p className="text-xs text-muted-foreground">
-                {content.length}/5000 caracteres
-              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="images">Imágenes (opcional)</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="images"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => document.getElementById('images')?.click()}
+                >
+                  <ImageIcon className="w-4 h-4 mr-2" />
+                  Subir Imágenes
+                </Button>
+              </div>
+              {images.length > 0 && (
+                <div className="grid grid-cols-3 gap-2 mt-2">
+                  {images.map((img, idx) => (
+                    <div key={idx} className="relative group">
+                      <img
+                        src={img}
+                        alt={`Upload ${idx + 1}`}
+                        className="w-full h-20 object-cover rounded border border-border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(idx)}
+                        className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter>

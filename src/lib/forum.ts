@@ -13,8 +13,11 @@ export interface ForumPost {
   id: string;
   title: string;
   content: string;
+  images?: string[];
   author_id: string;
   author_username: string;
+  author_avatar?: string;
+  author_role: string;
   category_id: string;
   category_name: string;
   created_at: string;
@@ -34,6 +37,8 @@ export interface ForumComment {
   post_id: string;
   author_id: string;
   author_username: string;
+  author_avatar?: string;
+  author_role: string;
   content: string;
   created_at: string;
   updated_at: string;
@@ -135,7 +140,7 @@ export const ForumService = {
     return this.getPosts().find(p => p.id === postId) || null;
   },
 
-  createPost(title: string, content: string, categoryId: string, user: User): ForumPost {
+  createPost(title: string, content: string, categoryId: string, user: User, images?: string[]): ForumPost {
     const posts = this.getPosts();
     const category = this.getCategories().find(c => c.id === categoryId);
     
@@ -143,8 +148,11 @@ export const ForumService = {
       id: crypto.randomUUID(),
       title,
       content,
+      images,
       author_id: user.id,
       author_username: user.username,
+      author_avatar: user.avatar,
+      author_role: user.role,
       category_id: categoryId,
       category_name: category?.name || 'General',
       created_at: new Date().toISOString(),
@@ -246,6 +254,8 @@ export const ForumService = {
       post_id: postId,
       author_id: user.id,
       author_username: user.username,
+      author_avatar: user.avatar,
+      author_role: user.role,
       content,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),

@@ -6,6 +6,7 @@ export interface User {
   email: string;
   role: UserRole;
   minecraft_username?: string;
+  avatar?: string;
   created_at: string;
   stats?: {
     level: number;
