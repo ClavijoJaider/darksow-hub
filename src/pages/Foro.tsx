@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { MessageSquare, Pin, Lock, Eye, ThumbsUp, Heart, Flame, Search } from "lucide-react";
 import { AuthService } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
-import { ForumService, ForumCategory, ForumPost } from "@/lib/forum";
+import { ForumService, ForumPost } from "@/lib/forum";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
+import { useStorageSync } from "@/hooks/useStorageSync";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import {
@@ -19,20 +20,11 @@ import {
 const Foro = () => {
   const user = AuthService.getCurrentUser();
   const navigate = useNavigate();
-  const [categories, setCategories] = useState<ForumCategory[]>([]);
-  const [posts, setPosts] = useState<ForumPost[]>([]);
+  const categories = useStorageSync('forum_categories', () => ForumService.getCategories());
+  const posts = useStorageSync('forum_posts', () => ForumService.getPosts());
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"recent" | "popular" | "views">("recent");
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = () => {
-    setCategories(ForumService.getCategories());
-    setPosts(ForumService.getPosts());
-  };
 
   const filteredPosts = posts.filter((p) => {
     const matchesCategory = selectedCategory ? p.category_id === selectedCategory : true;

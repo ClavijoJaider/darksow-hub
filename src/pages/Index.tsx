@@ -5,18 +5,12 @@ import { Link } from "react-router-dom";
 import { NewsService } from "@/lib/news";
 import { AuthService } from "@/lib/auth";
 import { useState, useEffect } from "react";
+import { useStorageSync } from "@/hooks/useStorageSync";
 
 const Index = () => {
-  const [news, setNews] = useState(NewsService.getNews());
+  const news = useStorageSync('news', () => NewsService.getNews());
   const user = AuthService.getCurrentUser();
   const isAdmin = user && (user.role === 'admin' || user.role === 'super_admin');
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setNews(NewsService.getNews());
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   const gameStats = [
     { label: "Jugadores Online", value: "2,847", icon: Users },

@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AuthService } from "@/lib/auth";
-import { ForumService, ForumPost, ForumComment } from "@/lib/forum";
+import { ForumService, ForumPost } from "@/lib/forum";
+import { useStorageSync } from "@/hooks/useStorageSync";
 import { ArrowLeft, Pin, Lock, Trash2, Edit, ThumbsUp, Heart, Flame, MessageSquare, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { UserAvatar } from "@/components/UserAvatar";
@@ -28,30 +29,34 @@ const ForoPost = () => {
   const navigate = useNavigate();
   const user = AuthService.getCurrentUser();
   const [post, setPost] = useState<ForumPost | null>(null);
-  const [comments, setComments] = useState<ForumComment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editCommentContent, setEditCommentContent] = useState("");
+  
+  // Sync comments and posts in real-time
+  const comments = useStorageSync('forum_comments', () => 
+    postId ? ForumService.getPostComments(postId) : []
+  );
+  const allPosts = useStorageSync('forum_posts', () => ForumService.getPosts());
 
+  // Update post when posts change
+  useEffect(() => {
+    if (!postId) return;
+    const postData = ForumService.getPost(postId);
+    if (postData) {
+      setPost(postData);
+    } else {
+      toast.error("Post no encontrado");
+      navigate("/foro");
+    }
+  }, [postId, allPosts, navigate]);
+  
+  // Increment views only once on mount
   useEffect(() => {
     if (postId) {
-      const loadedPost = ForumService.getPost(postId);
-      if (loadedPost) {
-        setPost(loadedPost);
-        ForumService.incrementViews(postId);
-        loadComments();
-      } else {
-        toast.error("Post no encontrado");
-        navigate("/foro");
-      }
+      ForumService.incrementViews(postId);
     }
-  }, [postId, navigate]);
-
-  const loadComments = () => {
-    if (postId) {
-      setComments(ForumService.getPostComments(postId));
-    }
-  };
+  }, []);
 
   const handleAddComment = () => {
     if (!user) {
@@ -72,7 +77,6 @@ const ForoPost = () => {
 
     ForumService.createComment(post.id, newComment, user);
     setNewComment("");
-    loadComments();
     toast.success("Comentario añadido");
   };
 
@@ -85,13 +89,11 @@ const ForoPost = () => {
     ForumService.updateComment(commentId, editCommentContent);
     setEditingCommentId(null);
     setEditCommentContent("");
-    loadComments();
     toast.success("Comentario actualizado");
   };
 
   const handleDeleteComment = (commentId: string) => {
     ForumService.deleteComment(commentId);
-    loadComments();
     toast.success("Comentario eliminado");
   };
 
@@ -106,7 +108,6 @@ const ForoPost = () => {
   const handleTogglePin = () => {
     if (post) {
       ForumService.togglePinPost(post.id);
-      setPost({ ...post, pinned: !post.pinned });
       toast.success(post.pinned ? "Post despineado" : "Post pineado");
     }
   };
@@ -114,7 +115,6 @@ const ForoPost = () => {
   const handleToggleLock = () => {
     if (post) {
       ForumService.toggleLockPost(post.id);
-      setPost({ ...post, locked: !post.locked });
       toast.success(post.locked ? "Tema desbloqueado" : "Tema bloqueado");
     }
   };
@@ -128,8 +128,6 @@ const ForoPost = () => {
 
     if (post) {
       ForumService.togglePostReaction(post.id, user.id, type);
-      const updatedPost = ForumService.getPost(post.id);
-      if (updatedPost) setPost(updatedPost);
     }
   };
 
@@ -141,7 +139,6 @@ const ForoPost = () => {
     }
 
     ForumService.toggleCommentReaction(commentId, user.id, type);
-    loadComments();
   };
 
   const canModerate = user && (user.role === 'admin' || user.role === 'moderador');

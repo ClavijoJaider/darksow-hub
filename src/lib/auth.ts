@@ -1,3 +1,5 @@
+import { storageEvents } from './storage-events';
+
 export type UserRole = 'usuario' | 'vip' | 'moderador' | 'admin' | 'super_admin';
 
 export interface User {
@@ -31,6 +33,7 @@ export const AuthService = {
     
     if (user) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+      storageEvents.emit('users');
       return user;
     }
     
@@ -57,6 +60,7 @@ export const AuthService = {
     users.push(newUser);
     localStorage.setItem('darksow_users', JSON.stringify(users));
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newUser));
+    storageEvents.emit('users');
     
     return newUser;
   },
@@ -73,6 +77,7 @@ export const AuthService = {
     if (index !== -1) {
       users[index] = user;
       localStorage.setItem('darksow_users', JSON.stringify(users));
+      storageEvents.emit('users');
     }
   },
 

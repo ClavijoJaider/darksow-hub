@@ -1,3 +1,5 @@
+import { storageEvents } from './storage-events';
+
 export interface NewsArticle {
   id: string;
   title: string;
@@ -50,6 +52,7 @@ export const NewsService = {
     
     news.unshift(newArticle);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(news));
+    storageEvents.emit('news');
     
     return newArticle;
   },
@@ -61,6 +64,7 @@ export const NewsService = {
     if (index !== -1) {
       news[index] = { ...news[index], ...updates };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(news));
+      storageEvents.emit('news');
     }
   },
 
@@ -68,6 +72,7 @@ export const NewsService = {
     const news = this.getNews();
     const filtered = news.filter(article => article.id !== id);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    storageEvents.emit('news');
   },
 
   initializeDefaultNews(): void {
