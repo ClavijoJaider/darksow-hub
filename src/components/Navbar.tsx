@@ -36,18 +36,17 @@ export const Navbar = () => {
 
   const navLinks = [
     { path: "/", label: "Inicio", icon: Home },
-    { path: "/jugar", label: "Jugar", icon: Gamepad2 },
-    { path: "/rankings", label: "Rankings", icon: Trophy },
     { path: "/tienda", label: "Tienda", icon: ShoppingCart },
-    { path: "/noticias", label: "Noticias", icon: Newspaper },
     { path: "/foro", label: "Foro", icon: MessageSquare },
+    { path: "/wiki", label: "Wiki", icon: Newspaper },
   ];
 
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
-      <div className="container mx-auto px-4">
+    <nav className="fixed top-4 left-0 right-0 z-50 px-4">
+      <div className="container mx-auto">
+        <div className="border border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 rounded-xl shadow-elevated">
         <div className="flex h-16 items-center justify-between">
           <Link to="/" className="flex items-center gap-2 group">
             <div className="relative">
@@ -79,7 +78,7 @@ export const Navbar = () => {
           <div className="hidden md:flex items-center gap-2">
             {user ? (
               <>
-                {user.role === "admin" && (
+                {(user.role === "admin" || user.role === "super_admin") && (
                   <Link to="/admin">
                     <Button variant="outline" size="sm" className="gap-2">
                       <Settings className="w-4 h-4" />
@@ -148,7 +147,7 @@ export const Navbar = () => {
             <div className="pt-2 border-t border-border space-y-2">
               {user ? (
                 <>
-                  {user.role === "admin" && (
+                  {(user.role === "admin" || user.role === "super_admin") && (
                     <Link to="/admin" onClick={() => setMobileMenuOpen(false)}>
                       <Button variant="outline" size="sm" className="w-full justify-start gap-2">
                         <Settings className="w-4 h-4" />
@@ -189,6 +188,7 @@ export const Navbar = () => {
             </div>
           </div>
         )}
+        </div>
       </div>
     </nav>
   );
