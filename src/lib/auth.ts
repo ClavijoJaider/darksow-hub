@@ -1,4 +1,4 @@
-export type UserRole = 'usuario' | 'vip' | 'moderador' | 'admin';
+export type UserRole = 'usuario' | 'vip' | 'moderador' | 'admin' | 'super_admin';
 
 export interface User {
   id: string;
@@ -7,6 +7,7 @@ export interface User {
   role: UserRole;
   minecraft_username?: string;
   avatar?: string;
+  profile_description?: string;
   created_at: string;
   stats?: {
     level: number;
@@ -84,9 +85,31 @@ export const AuthService = {
       vip: 2,
       moderador: 3,
       admin: 4,
+      super_admin: 5,
     };
 
     return roleHierarchy[user.role] >= roleHierarchy[requiredRole];
+  },
+  
+  canManageRole(targetRole: UserRole): boolean {
+    const user = this.getCurrentUser();
+    if (!user) return false;
+    
+    const roleHierarchy: Record<UserRole, number> = {
+      usuario: 1,
+      vip: 2,
+      moderador: 3,
+      admin: 4,
+      super_admin: 5,
+    };
+    
+    // Solo Super Admin puede gestionar Admins
+    if (targetRole === 'admin') {
+      return user.role === 'super_admin';
+    }
+    
+    // Admins y Super Admins pueden gestionar roles inferiores
+    return roleHierarchy[user.role] >= 4;
   },
 
   getAllUsers(): User[] {
@@ -97,29 +120,26 @@ export const AuthService = {
   initializeDefaultUsers(): void {
     const users = this.getAllUsers();
     
-    if (users.length === 0) {
+    // Eliminar todas las cuentas demo
+    const nonDemoUsers = users.filter(user => user.id !== 'demo');
+    
+    if (nonDemoUsers.length === 0) {
       const defaultUsers: User[] = [
         {
           id: '1',
-          username: 'Admin',
-          email: 'admin@darksow.net',
-          role: 'admin',
-          minecraft_username: 'DarksowAdmin',
+          username: 'SuperAdmin',
+          email: 'superadmin@darksow.net',
+          role: 'super_admin',
+          minecraft_username: 'DarksowSuper',
           created_at: new Date().toISOString(),
           stats: { level: 100, coins: 999999, karma: 10000 },
-        },
-        {
-          id: '2',
-          username: 'Moderador',
-          email: 'mod@darksow.net',
-          role: 'moderador',
-          minecraft_username: 'DarksowMod',
-          created_at: new Date().toISOString(),
-          stats: { level: 50, coins: 50000, karma: 5000 },
         },
       ];
       
       localStorage.setItem('darksow_users', JSON.stringify(defaultUsers));
+    } else {
+      // Solo guardar usuarios no-demo
+      localStorage.setItem('darksow_users', JSON.stringify(nonDemoUsers));
     }
   },
 };

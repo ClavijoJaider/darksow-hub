@@ -1,73 +1,56 @@
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Gamepad2, Users, Zap, Calendar, Tag } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Users, Activity, Gamepad2, Copy, Check } from "lucide-react";
+import { NewsService } from "@/lib/news";
+import { AuthService } from "@/lib/auth";
 import { useState, useEffect } from "react";
-import { toast } from "sonner";
 
 const Index = () => {
-  const [copied, setCopied] = useState(false);
-  const [stats, setStats] = useState({
-    online: 247,
-    registered: 15420,
-    playing: 189,
-  });
+  const [news, setNews] = useState(NewsService.getNews());
+  const user = AuthService.getCurrentUser();
+  const isAdmin = user && (user.role === 'admin' || user.role === 'super_admin');
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setStats({
-        online: 200 + Math.floor(Math.random() * 100),
-        registered: 15420 + Math.floor(Math.random() * 50),
-        playing: 150 + Math.floor(Math.random() * 80),
-      });
-    }, 5000);
+      setNews(NewsService.getNews());
+    }, 1000);
     return () => clearInterval(interval);
   }, []);
 
-  const copyIP = () => {
-    navigator.clipboard.writeText("darksow.net");
-    setCopied(true);
-    toast.success("IP copiada al portapapeles");
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const gameStats = [
+    { label: "Jugadores Online", value: "2,847", icon: Users },
+    { label: "Modos de Juego", value: "2", icon: Gamepad2 },
+    { label: "Eventos Activos", value: "5", icon: Zap },
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-dark">
       {/* Hero Section */}
-      <section className="relative py-20 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/10 to-transparent" />
+      <section className="relative pt-32 pb-20 overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1511512578047-dfb367046420?w=1920')] bg-cover bg-center opacity-10" />
         <div className="container mx-auto px-4 relative z-10">
-          <div className="text-center space-y-6 max-w-4xl mx-auto">
-            <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent animate-in fade-in slide-in-from-bottom-4 duration-1000">
-              DARKSOW NETWORK
+          <div className="text-center max-w-4xl mx-auto">
+            <h1 className="text-6xl md:text-7xl font-bold mb-6">
+              <span className="bg-gradient-primary bg-clip-text text-transparent">
+                DARKSOW
+              </span>
+              <br />
+              <span className="text-foreground">Network</span>
             </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-150">
-              El mejor servidor de Minecraft en español
+            <p className="text-xl text-muted-foreground mb-8">
+              La mejor experiencia de Minecraft con SkyBlock y Majestic Mods
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300">
-              <Card className="p-4 bg-card/50 backdrop-blur border-border hover:border-primary transition-colors group cursor-pointer" onClick={copyIP}>
-                <div className="flex items-center gap-3">
-                  <div className="text-left">
-                    <p className="text-xs text-muted-foreground">IP del Servidor</p>
-                    <p className="text-lg font-bold text-primary">darksow.net</p>
-                  </div>
-                  {copied ? (
-                    <Check className="w-5 h-5 text-primary" />
-                  ) : (
-                    <Copy className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                  )}
-                </div>
-              </Card>
-            </div>
-            <div className="flex flex-wrap justify-center gap-4 pt-4">
-              <Link to="/jugar">
-                <Button size="lg" className="bg-gradient-primary shadow-glow hover:shadow-gold-glow transition-all">
-                  <Gamepad2 className="w-5 h-5 mr-2" />
-                  Comenzar a Jugar
-                </Button>
-              </Link>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button
+                size="lg"
+                className="bg-gradient-primary shadow-glow text-lg px-8"
+              >
+                <Gamepad2 className="mr-2" />
+                Conectar: darksow.net
+              </Button>
               <Link to="/tienda">
-                <Button size="lg" variant="outline" className="border-secondary text-secondary hover:bg-secondary/10">
+                <Button size="lg" variant="outline" className="text-lg px-8">
                   Ver Tienda
                 </Button>
               </Link>
@@ -77,103 +60,157 @@ const Index = () => {
       </section>
 
       {/* Stats Section */}
-      <section className="py-12 border-y border-border bg-card/30 backdrop-blur">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="p-6 bg-gradient-to-br from-card to-muted border-border hover:border-primary transition-all duration-300 hover:shadow-glow">
+      <section className="container mx-auto px-4 -mt-10 mb-20 relative z-20">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {gameStats.map((stat) => (
+            <Card
+              key={stat.label}
+              className="p-6 bg-card border-border hover:shadow-glow transition-all"
+            >
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-primary/10 rounded-lg">
-                  <Users className="w-8 h-8 text-primary" />
+                <div className="p-3 bg-gradient-primary rounded-lg">
+                  <stat.icon className="w-6 h-6 text-primary-foreground" />
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-foreground">{stats.online}</p>
-                  <p className="text-sm text-muted-foreground">Jugadores Online</p>
+                  <p className="text-3xl font-bold text-foreground">
+                    {stat.value}
+                  </p>
+                  <p className="text-muted-foreground">{stat.label}</p>
                 </div>
               </div>
             </Card>
-            <Card className="p-6 bg-gradient-to-br from-card to-muted border-border hover:border-secondary transition-all duration-300 hover:shadow-gold-glow">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-secondary/10 rounded-lg">
-                  <Activity className="w-8 h-8 text-secondary" />
-                </div>
-                <div>
-                  <p className="text-3xl font-bold text-foreground">{stats.registered.toLocaleString()}</p>
-                  <p className="text-sm text-muted-foreground">Usuarios Registrados</p>
-                </div>
-              </div>
-            </Card>
-            <Card className="p-6 bg-gradient-to-br from-card to-muted border-border hover:border-primary transition-all duration-300 hover:shadow-glow">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-primary/10 rounded-lg">
-                  <Gamepad2 className="w-8 h-8 text-primary" />
-                </div>
-                <div>
-                  <p className="text-3xl font-bold text-foreground">{stats.playing}</p>
-                  <p className="text-sm text-muted-foreground">En Partida</p>
-                </div>
-              </div>
-            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* News Section */}
+      <section className="container mx-auto px-4 pb-20">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-4xl font-bold text-foreground mb-2">
+              Noticias y Anuncios
+            </h2>
+            <p className="text-muted-foreground">
+              Mantente al día con las últimas actualizaciones
+            </p>
           </div>
+          {isAdmin && (
+            <Link to="/admin">
+              <Button variant="outline">Gestionar Noticias</Button>
+            </Link>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {news.length > 0 ? (
+            news.map((article) => (
+              <Card
+                key={article.id}
+                className="overflow-hidden bg-card border-border hover:shadow-glow transition-all cursor-pointer group"
+              >
+                {/* Cover Image */}
+                <div className="relative h-48 overflow-hidden">
+                  <img
+                    src={article.cover_image}
+                    alt={article.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
+                  <div className="absolute bottom-4 left-4">
+                    <span className="px-3 py-1 bg-primary rounded-full text-xs font-bold text-primary-foreground">
+                      {article.category}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="p-6">
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-4 h-4" />
+                      {new Date(article.published_at).toLocaleDateString('es-ES')}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Tag className="w-4 h-4" />
+                      {article.author_name}
+                    </div>
+                  </div>
+
+                  <h3 className="text-2xl font-bold text-foreground mb-3 group-hover:text-primary transition-colors">
+                    {article.title}
+                  </h3>
+
+                  <p className="text-muted-foreground mb-4 line-clamp-2">
+                    {article.excerpt}
+                  </p>
+
+                  <p className="text-foreground">
+                    {article.content}
+                  </p>
+                </div>
+              </Card>
+            ))
+          ) : (
+            <Card className="col-span-2 p-12 text-center bg-card border-border">
+              <p className="text-muted-foreground">
+                No hay noticias publicadas aún
+              </p>
+            </Card>
+          )}
         </div>
       </section>
 
       {/* Game Modes Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-bold text-center mb-12 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            Modos de Juego
-          </h2>
-          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            <Card className="group overflow-hidden border-border hover:border-primary transition-all duration-300 hover:shadow-glow">
-              <div className="p-8 space-y-4">
-                <div className="w-16 h-16 bg-gradient-primary rounded-lg flex items-center justify-center shadow-glow group-hover:scale-110 transition-transform">
-                  <Gamepad2 className="w-8 h-8 text-primary-foreground" />
-                </div>
-                <h3 className="text-2xl font-bold text-foreground">Skyblock</h3>
-                <p className="text-muted-foreground">
-                  Comienza en una isla flotante y expande tu imperio. Completa misiones, comercia con otros jugadores y conviértete en el más poderoso.
-                </p>
-                <Link to="/jugar">
-                  <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary/10">
-                    Jugar Skyblock
-                  </Button>
-                </Link>
-              </div>
-            </Card>
-            <Card className="group overflow-hidden border-border hover:border-secondary transition-all duration-300 hover:shadow-gold-glow">
-              <div className="p-8 space-y-4">
-                <div className="w-16 h-16 bg-gradient-gold rounded-lg flex items-center justify-center shadow-gold-glow group-hover:scale-110 transition-transform">
-                  <Gamepad2 className="w-8 h-8 text-secondary-foreground" />
-                </div>
-                <h3 className="text-2xl font-bold text-foreground">Majestic Mods</h3>
-                <p className="text-muted-foreground">
-                  Experimenta Minecraft con mods épicos. Explora nuevas dimensiones, tecnología avanzada y magia en un mundo completamente modificado.
-                </p>
-                <Link to="/jugar">
-                  <Button variant="outline" className="w-full border-secondary text-secondary hover:bg-secondary/10">
-                    Jugar Majestic Mods
-                  </Button>
-                </Link>
-              </div>
-            </Card>
-          </div>
-        </div>
-      </section>
+      <section className="container mx-auto px-4 pb-20">
+        <h2 className="text-4xl font-bold text-center text-foreground mb-12">
+          Modos de Juego
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <Card className="overflow-hidden bg-card border-border hover:shadow-glow transition-all group">
+            <div className="relative h-64">
+              <img
+                src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800"
+                alt="SkyBlock"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
+            </div>
+            <div className="p-8">
+              <h3 className="text-3xl font-bold text-foreground mb-4">
+                SkyBlock
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                Comienza en una isla flotante y construye tu imperio. Farming,
+                trading, y minions te esperan.
+              </p>
+              <Button className="bg-gradient-primary shadow-glow">
+                Explorar SkyBlock
+              </Button>
+            </div>
+          </Card>
 
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-br from-primary/10 to-secondary/10">
-        <div className="container mx-auto px-4 text-center space-y-6">
-          <h2 className="text-3xl md:text-5xl font-bold text-foreground">
-            ¿Listo para la aventura?
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Únete a miles de jugadores en Darksow Network y vive la mejor experiencia de Minecraft
-          </p>
-          <Link to="/auth?mode=register">
-            <Button size="lg" className="bg-gradient-primary shadow-glow hover:shadow-gold-glow transition-all">
-              Crear Cuenta Gratis
-            </Button>
-          </Link>
+          <Card className="overflow-hidden bg-card border-border hover:shadow-glow transition-all group">
+            <div className="relative h-64">
+              <img
+                src="https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800"
+                alt="Majestic Mods"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
+            </div>
+            <div className="p-8">
+              <h3 className="text-3xl font-bold text-foreground mb-4">
+                Majestic Mods
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                Experiencia modded única con tecnología avanzada y magia. Crea
+                tu propia aventura.
+              </p>
+              <Button className="bg-gradient-primary shadow-glow">
+                Explorar Mods
+              </Button>
+            </div>
+          </Card>
         </div>
       </section>
     </div>

@@ -7,14 +7,12 @@ import { Navbar } from "@/components/Navbar";
 import { AuthService } from "@/lib/auth";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import Jugar from "./pages/Jugar";
-import Rankings from "./pages/Rankings";
 import Tienda from "./pages/Tienda";
-import Noticias from "./pages/Noticias";
 import Foro from "./pages/Foro";
 import ForoPost from "./pages/ForoPost";
 import Perfil from "./pages/Perfil";
 import Admin from "./pages/Admin";
+import Wiki from "./pages/Wiki";
 import NotFound from "./pages/NotFound";
 import { useEffect } from "react";
 
@@ -39,14 +37,12 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/jugar" element={<Jugar />} />
-            <Route path="/rankings" element={<Rankings />} />
             <Route path="/tienda" element={<Tienda />} />
-            <Route path="/noticias" element={<Noticias />} />
-          <Route path="/foro" element={<Foro />} />
-          <Route path="/foro/post/:postId" element={<ForoPost />} />
+            <Route path="/foro" element={<Foro />} />
+            <Route path="/foro/post/:postId" element={<ForoPost />} />
             <Route path="/perfil" element={<Perfil />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/wiki" element={<Wiki />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

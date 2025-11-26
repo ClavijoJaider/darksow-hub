@@ -15,6 +15,7 @@ const Perfil = () => {
   const [formData, setFormData] = useState({
     username: "",
     minecraft_username: "",
+    profile_description: "",
   });
 
   useEffect(() => {
@@ -27,6 +28,7 @@ const Perfil = () => {
     setFormData({
       username: currentUser.username,
       minecraft_username: currentUser.minecraft_username || "",
+      profile_description: currentUser.profile_description || "",
     });
   }, [navigate]);
 
@@ -54,6 +56,7 @@ const Perfil = () => {
       ...user,
       username: formData.username,
       minecraft_username: formData.minecraft_username,
+      profile_description: formData.profile_description,
     };
 
     AuthService.updateUser(updatedUser);
@@ -208,6 +211,22 @@ const Perfil = () => {
                     }
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="profile_description">
+                    Sobre mí
+                  </Label>
+                  <Input
+                    id="profile_description"
+                    placeholder="Escribe una breve descripción sobre ti..."
+                    value={formData.profile_description}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        profile_description: e.target.value,
+                      })
+                    }
+                  />
+                </div>
                 <Button
                   onClick={handleSave}
                   className="w-full bg-gradient-primary shadow-glow hover:shadow-gold-glow transition-all"
@@ -235,11 +254,16 @@ const Perfil = () => {
                   {new Date(user.created_at).toLocaleDateString("es-ES")}
                 </span>
               </div>
-              <div className="flex justify-between py-2">
-                <span className="text-muted-foreground">Rol</span>
-                <span className={`font-bold uppercase ${getRoleColor(user.role)}`}>
-                  {user.role}
-                </span>
+              <div className="flex flex-col py-2 space-y-2">
+                <span className="text-muted-foreground">Rango Actual</span>
+                <div className="flex items-center justify-between">
+                  <span className={`font-bold uppercase ${getRoleColor(user.role)}`}>
+                    {user.role}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground italic">
+                  Este rango es asignado por el sistema y solo puede ser actualizado por un administrador.
+                </p>
               </div>
             </div>
           </Card>
