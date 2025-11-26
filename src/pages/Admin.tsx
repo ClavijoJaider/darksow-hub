@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AuthService, User, UserRole } from "@/lib/auth";
 import { NewsService } from "@/lib/news";
+import { useStorageSync } from "@/hooks/useStorageSync";
 import { toast } from "sonner";
 import {
   Users,
@@ -37,8 +38,8 @@ import {
 const Admin = () => {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<User[]>([]);
-  const [news, setNews] = useState(NewsService.getNews());
+  const users = useStorageSync('users', () => AuthService.getAllUsers());
+  const news = useStorageSync('news', () => NewsService.getNews());
   const [activeTab, setActiveTab] = useState<"users" | "news">("users");
   
   // News form state
@@ -58,17 +59,7 @@ const Admin = () => {
       return;
     }
     setCurrentUser(user);
-    loadUsers();
   }, [navigate]);
-
-  const loadUsers = () => {
-    const allUsers = AuthService.getAllUsers();
-    setUsers(allUsers);
-  };
-
-  const loadNews = () => {
-    setNews(NewsService.getNews());
-  };
 
   const handleRoleChange = (userId: string, newRole: UserRole) => {
     if (!currentUser) return;
@@ -84,7 +75,6 @@ const Admin = () => {
 
     const updatedUser = { ...userToUpdate, role: newRole };
     AuthService.updateUser(updatedUser);
-    loadUsers();
     toast.success(`Rol de ${userToUpdate.username} actualizado a ${newRole}`);
   };
 
@@ -114,13 +104,11 @@ const Admin = () => {
       category: "",
     });
 
-    loadNews();
     toast.success("Noticia publicada");
   };
 
   const handleDeleteNews = (id: string) => {
     NewsService.deleteArticle(id);
-    loadNews();
     toast.success("Noticia eliminada");
   };
 

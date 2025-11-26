@@ -1,4 +1,5 @@
 import { User } from './auth';
+import { storageEvents } from './storage-events';
 
 export interface ForumCategory {
   id: string;
@@ -118,12 +119,14 @@ export const ForumService = {
     };
     categories.push(newCategory);
     localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories));
+    storageEvents.emit('forum_categories');
     return newCategory;
   },
 
   deleteCategory(categoryId: string): void {
     const categories = this.getCategories().filter(c => c.id !== categoryId);
     localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories));
+    storageEvents.emit('forum_categories');
   },
 
   // Posts
@@ -169,6 +172,7 @@ export const ForumService = {
     
     posts.unshift(newPost);
     localStorage.setItem(POSTS_KEY, JSON.stringify(posts));
+    storageEvents.emit('forum_posts');
     return newPost;
   },
 
@@ -180,6 +184,7 @@ export const ForumService = {
       posts[index].content = content;
       posts[index].updated_at = new Date().toISOString();
       localStorage.setItem(POSTS_KEY, JSON.stringify(posts));
+      storageEvents.emit('forum_posts');
     }
   },
 
@@ -190,6 +195,8 @@ export const ForumService = {
     // Delete associated comments
     const comments = this.getComments().filter(c => c.post_id !== postId);
     localStorage.setItem(COMMENTS_KEY, JSON.stringify(comments));
+    storageEvents.emit('forum_posts');
+    storageEvents.emit('forum_comments');
   },
 
   togglePinPost(postId: string): void {
@@ -198,6 +205,7 @@ export const ForumService = {
     if (index !== -1) {
       posts[index].pinned = !posts[index].pinned;
       localStorage.setItem(POSTS_KEY, JSON.stringify(posts));
+      storageEvents.emit('forum_posts');
     }
   },
 
@@ -207,6 +215,7 @@ export const ForumService = {
     if (index !== -1) {
       posts[index].locked = !posts[index].locked;
       localStorage.setItem(POSTS_KEY, JSON.stringify(posts));
+      storageEvents.emit('forum_posts');
     }
   },
 
@@ -216,6 +225,7 @@ export const ForumService = {
     if (index !== -1) {
       posts[index].views++;
       localStorage.setItem(POSTS_KEY, JSON.stringify(posts));
+      storageEvents.emit('forum_posts');
     }
   },
 
@@ -233,6 +243,7 @@ export const ForumService = {
       }
       
       localStorage.setItem(POSTS_KEY, JSON.stringify(posts));
+      storageEvents.emit('forum_posts');
     }
   },
 
@@ -267,6 +278,7 @@ export const ForumService = {
     
     comments.push(newComment);
     localStorage.setItem(COMMENTS_KEY, JSON.stringify(comments));
+    storageEvents.emit('forum_comments');
     return newComment;
   },
 
@@ -277,12 +289,14 @@ export const ForumService = {
       comments[index].content = content;
       comments[index].updated_at = new Date().toISOString();
       localStorage.setItem(COMMENTS_KEY, JSON.stringify(comments));
+      storageEvents.emit('forum_comments');
     }
   },
 
   deleteComment(commentId: string): void {
     const comments = this.getComments().filter(c => c.id !== commentId);
     localStorage.setItem(COMMENTS_KEY, JSON.stringify(comments));
+    storageEvents.emit('forum_comments');
   },
 
   toggleCommentReaction(commentId: string, userId: string, reactionType: 'like' | 'love'): void {
@@ -299,6 +313,7 @@ export const ForumService = {
       }
       
       localStorage.setItem(COMMENTS_KEY, JSON.stringify(comments));
+      storageEvents.emit('forum_comments');
     }
   },
 };
